@@ -87,6 +87,9 @@ void remove_ready_queue(PROCESS proc)
 void become_zombie()
 {
     active_proc->state = STATE_ZOMBIE;
+    remove_ready_queue(active_proc);
+    resign();
+    // Never reached
     while (1);
 }
 
@@ -130,8 +133,25 @@ PROCESS dispatcher()
  */
 void resign()
 {
+	asm("pushl %eax; pushl %ecx; pushl %edx; pushl %ebx");
+	asm("pushl %ebp; pushl %esi; pushl %edi");
+
+	asm("movl %%esp,%0": "=r"(active_proc->esp):);
+    active_proc = dispatcher();
+    check_activeproc();
+    asm("movl %0,%%esp": :"r"(active_proc->esp));
+
+    asm("popl %edi; popl %esi; popl %ebp");
+    asm("popl %ebx; popl %edx; popl %ecx; popl %eax");
+    asm("ret");
 }
 
+
+// Error checking
+void check_activeproc()
+{
+	assert(active_proc != NULL);
+}
 
 
 /* 
