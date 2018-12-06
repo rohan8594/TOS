@@ -75,7 +75,7 @@ void clear_window(WINDOW * wnd)
     volatile int    flag;
 
     DISABLE_INTR(flag);
-	for(int i = 0; i < wnd->height; i++) {
+    for(int i = 0; i < wnd->height; i++) {
 		for(int j = 0; j < wnd->width; j++) {
 			poke_screen(wnd->x + j, wnd->y + i, 0);
 		}

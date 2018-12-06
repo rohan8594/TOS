@@ -27,7 +27,7 @@ void add_ready_queue(PROCESS proc)
 	int prio;
 	volatile int    flag;
 
-    DISABLE_INTR(flag);
+	DISABLE_INTR(flag);
 	assert(proc->magic == MAGIC_PCB); // error/consistency check
 	prio = proc->priority;
 
@@ -64,7 +64,7 @@ void remove_ready_queue(PROCESS proc)
 	int prio;
 	volatile int    flag;
 
-    DISABLE_INTR(flag);
+	DISABLE_INTR(flag);
 	assert(proc->magic == MAGIC_PCB);
 	prio = proc->priority;
 
@@ -117,7 +117,7 @@ PROCESS dispatcher()
 	unsigned i;
 	volatile int    flag;
 
-    DISABLE_INTR(flag);
+	DISABLE_INTR(flag);
 
 	
 	i = table[ready_procs]; // gives queue with highest priority that isn't empty.
@@ -144,8 +144,8 @@ PROCESS dispatcher()
  */
 void resign()
 {
-	asm("pushfl;cli;popl %eax;xchgl (%esp),%eax");
-    asm("push %cs;pushl %eax");
+    asm("pushfl; cli; popl %eax; xchgl (%esp),%eax");
+    asm("push %cs; pushl %eax");
     asm("pushl %eax; pushl %ecx; pushl %edx; pushl %ebx");
     asm("pushl %ebp; pushl %esi; pushl %edi");
 

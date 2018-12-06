@@ -22,7 +22,7 @@ PORT create_process(void (*ptr_to_new_proc) (PROCESS, PARAM),
 	if (next_free_pcb == NULL)
 		panic("create(): PCB full");
 
-	new_proc = next_free_pcb;
+    new_proc = next_free_pcb;
     next_free_pcb = new_proc->next;
     ENABLE_INTR(flag);
     new_proc->used = TRUE;
