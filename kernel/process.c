@@ -28,6 +28,8 @@ PORT create_process(void (*ptr_to_new_proc) (PROCESS, PARAM),
 	new_proc->first_port = NULL;
 	new_proc->name = name;
 
+	new_port = create_new_port(new_proc);
+
 	esp = 640 * 1024 - (new_proc - pcb) * 16 * 1024;
 
 #define PUSH(x)	esp -= 4; \
@@ -51,7 +53,7 @@ PORT create_process(void (*ptr_to_new_proc) (PROCESS, PARAM),
 
 	add_ready_queue(new_proc);
 
-	return NULL;
+	return new_port;
 
 }
 
