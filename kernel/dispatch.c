@@ -137,7 +137,7 @@ void resign()
     asm("pushl %ebp; pushl %esi; pushl %edi");
 
     asm("movl %%esp,%0": "=r"(active_proc->esp):);
-	active_proc = dispatcher();
+    active_proc = dispatcher();
     check_activeproc();
     asm("movl %0,%%esp": :"r"(active_proc->esp));
 
