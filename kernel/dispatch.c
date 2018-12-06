@@ -25,6 +25,9 @@ unsigned		ready_procs; // bits in ready_procs tell you which ready queue is empt
 void add_ready_queue(PROCESS proc)
 {
 	int prio;
+	volatile int    flag;
+
+    DISABLE_INTR(flag);
 	assert(proc->magic == MAGIC_PCB); // error/consistency check
 	prio = proc->priority;
 
@@ -45,6 +48,7 @@ void add_ready_queue(PROCESS proc)
 	}
 
 	proc->state = STATE_READY;
+	ENABLE_INTR(flag);
 }
 
 
@@ -58,6 +62,9 @@ void add_ready_queue(PROCESS proc)
 void remove_ready_queue(PROCESS proc)
 {
 	int prio;
+	volatile int    flag;
+
+    DISABLE_INTR(flag);
 	assert(proc->magic == MAGIC_PCB);
 	prio = proc->priority;
 
@@ -74,6 +81,7 @@ void remove_ready_queue(PROCESS proc)
 		proc->prev->next = proc->next;
 
 	}
+	ENABLE_INTR(flag);
 }
 
 
@@ -107,6 +115,9 @@ PROCESS dispatcher()
 {
 	PROCESS new_proc;
 	unsigned i;
+	volatile int    flag;
+
+    DISABLE_INTR(flag);
 
 	
 	i = table[ready_procs]; // gives queue with highest priority that isn't empty.
@@ -118,7 +129,7 @@ PROCESS dispatcher()
 	} else {
 		new_proc = ready_queue[i];
 	}
-
+	ENABLE_INTR(flag);
 	return new_proc;
 }
 
@@ -133,6 +144,8 @@ PROCESS dispatcher()
  */
 void resign()
 {
+	asm("pushfl;cli;popl %eax;xchgl (%esp),%eax");
+    asm("push %cs;pushl %eax");
     asm("pushl %eax; pushl %ecx; pushl %edx; pushl %ebx");
     asm("pushl %ebp; pushl %esi; pushl %edi");
 
@@ -143,7 +156,7 @@ void resign()
 
     asm("popl %edi; popl %esi; popl %ebp");
     asm("popl %ebx; popl %edx; popl %ecx; popl %eax");
-    asm("ret");
+    asm("iret");
 }
 
 
