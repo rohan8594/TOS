@@ -133,11 +133,11 @@ PROCESS dispatcher()
  */
 void resign()
 {
-	asm("pushl %eax; pushl %ecx; pushl %edx; pushl %ebx");
-	asm("pushl %ebp; pushl %esi; pushl %edi");
+    asm("pushl %eax; pushl %ecx; pushl %edx; pushl %ebx");
+    asm("pushl %ebp; pushl %esi; pushl %edi");
 
-	asm("movl %%esp,%0": "=r"(active_proc->esp):);
-    active_proc = dispatcher();
+    asm("movl %%esp,%0": "=r"(active_proc->esp):);
+	active_proc = dispatcher();
     check_activeproc();
     asm("movl %0,%%esp": :"r"(active_proc->esp));
 
