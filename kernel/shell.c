@@ -39,20 +39,111 @@ void clean_buffer(COMMAND* cmd) {
 }
 
 
+// remove leading and trailing whitespaces
+void clean_command(COMMAND* cmd) {
+
+	int i, j, start, end;
+	char temp_buffer[MAX_LEN];
+
+	for (i = 0; i < cmd->len; i++) {
+		if (cmd->buffer[i] != ' ') {
+			start = i;
+			break;
+		}
+	}
+
+	for (i = cmd->len - 1; i >= 0 ; i--) {
+		if (cmd->buffer[i] != ' ') {
+			end = i;
+			break;
+		}
+	}
+
+	for (i = start, j = 0; i <= end; i++) {
+		temp_buffer[j++] = cmd->buffer[i];
+	}
+
+	clean_buffer(cmd);
+
+	while(temp_buffer[cmd->len] != '\0') {
+		cmd->buffer[cmd->len] = temp_buffer[cmd->len];
+		cmd->len++;
+	}
+	cmd->buffer[cmd->len] = '\0';
+
+}
+
+
 void execute_about(int window_id) {
-	wm_print(window_id, "\n********* TOS *********\n");
+	wm_print(window_id, "\n*********** TOS ************\n");
 	wm_print(window_id, "       by Rohan Patel        \n");
-	wm_print(window_id, "***************************");
+	wm_print(window_id, "                             \n");
+	wm_print(window_id, "    built on Prof. Puder's  \n");
+	wm_print(window_id, "   reference implemenation   \n");
+	wm_print(window_id, "****************************");
 }
 
 
 void execute_help(int window_id) {
-	wm_print(window_id, "\nSupported Commands:\n");
-	wm_print(window_id, "cls: Clear screen\n");
-	wm_print(window_id, "about: About the project\n");
-	wm_print(window_id, "shell: Launch new shell\n");
-	wm_print(window_id, "help: Lists out supported commands\n");
-	wm_print(window_id, "pong: Launch a game of pong\n");
+	wm_print(window_id, "\nTOS shell supports the following commands:\n\n");
+	wm_print(window_id, "help:       Lists out supported commands\n");
+	wm_print(window_id, "about:      About the project\n");
+	wm_print(window_id, "cls:        Clears the screen\n");
+	wm_print(window_id, "shell:      Launches a new shell\n");
+	wm_print(window_id, "pong:       Launches a game of PONG\n");
+	wm_print(window_id, "ps:         Prints out the process table\n");
+	wm_print(window_id, "echo <msg>: Echoes to the console the string that follows the command\n");
+	wm_print(window_id, "history:    Prints all commands that have been typed into the shell\n");
+	wm_print(window_id, "!<number>:  Repeats the command with the given number\n");
+}
+
+
+void print_proc_heading(int window_id) {
+	wm_print(window_id, "\nState           Active Prio Name\n");
+	wm_print(window_id, "------------------------------------------------\n");
+}
+
+
+void print_proc_details(int window_id, PROCESS p) {
+
+	static const char *state[] = { "READY          ", 
+	"ZOMBIE         ",
+	"SEND_BLOCKED   ",
+	"REPLY_BLOCKED  ",
+	"RECEIVE_BLOCKED",
+	"MESSAGE_BLOCKED",
+	"INTR_BLOCKED   "
+	};
+
+	if (!p->used) {
+		wm_print(window_id, "PCB slot unused!\n");
+		return;
+	}
+
+	wm_print(window_id, state[p->state]);
+
+	if (p == active_proc)
+		wm_print(window_id, "    *   ");
+	else
+		wm_print(window_id, "        ");
+
+	wm_print(window_id, "  %2d", p->priority);
+	wm_print(window_id, " %s\n", p->name);
+}
+
+
+// slightly modified version of print_all_processes() from process.c
+void execute_ps(int window_id) {
+	int i;
+	PCB* p = pcb;
+
+	print_proc_heading(window_id);
+
+	for (i = 0; i < MAX_PROCS; i++, p++) {
+		if (!p->used)
+			continue;
+		print_proc_details(window_id, p);
+	}
 }
 
 
@@ -101,6 +192,8 @@ void execute_command(int window_id, COMMAND* cmd) {
 		execute_help(window_id);
 	} else if (string_compare(cmd->buffer, "about") == 0) {
 		execute_about(window_id);
+	} else if (string_compare(cmd->buffer, "ps") == 0) {
+		execute_ps(window_id);
 	} else if (string_compare(cmd->buffer, "") == 0) {
 		;
 	} else {
@@ -126,7 +219,7 @@ void shell_process(PROCESS self, PARAM param) {
 		
 		read_command(window_id, cmd);
 		if (cmd->limit_flag != TRUE) {
-			// remove whitespace
+			clean_command(cmd);
 			execute_command(window_id, cmd);
 			// print_output(entered_command);
 		}
