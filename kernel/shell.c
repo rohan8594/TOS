@@ -30,17 +30,22 @@ int string_compare(const char* str1, const char* str2) {
 }
 
 
+int string_compare_for_echo(const char* str) {
+	return k_memcmp(str, "echo", k_strlen("echo"));
+}
+
+
 void clean_buffer(COMMAND* cmd) {
 
 	while (cmd->len != 0) {
-		cmd->buffer[cmd->len] = '\0';
+		cmd->buffer[cmd->len] = ' ';
 		cmd->len--;
 	}
 }
 
 
 // remove leading and trailing whitespaces
-void clean_command(COMMAND* cmd) {
+void clear_whitespaces(COMMAND* cmd) {
 
 	int i, j, start, end;
 	char temp_buffer[MAX_LEN];
@@ -132,6 +137,15 @@ void print_proc_details(int window_id, PROCESS p) {
 }
 
 
+void print_cmd_404(int window_id, COMMAND* cmd) {
+	wm_print(window_id, "\nERROR: ");
+	for (int i = 0; i < cmd->len; i++) {
+		wm_print(window_id, "%c", cmd->buffer[i]);
+	}
+	wm_print(window_id, ": Command not found");
+}
+
+
 // slightly modified version of print_all_processes() from process.c
 void execute_ps(int window_id) {
 	int i;
@@ -143,6 +157,27 @@ void execute_ps(int window_id) {
 		if (!p->used)
 			continue;
 		print_proc_details(window_id, p);
+	}
+}
+
+
+void execute_echo(int window_id, COMMAND* cmd) {
+	int ignore_quotes = 0;
+
+	if (cmd->buffer[4] == ' ' || cmd->buffer[4] == '\0') {
+		wm_print(window_id, "\n");
+
+		if (cmd->buffer[5] == '"' && cmd->buffer[cmd->len - 1] == '"' || cmd->buffer[5] == '\'' && cmd->buffer[cmd->len - 1] == '\'') {
+			// wm_print(window_id, "contains quotes test passed\n");
+			ignore_quotes = 1;
+		}
+
+		for (int i = (5 + ignore_quotes); i < (cmd->len - ignore_quotes); i++) {
+			wm_print(window_id, "%c", cmd->buffer[i]);
+		}
+
+	} else {
+		print_cmd_404(window_id, cmd);
 	}
 }
 
@@ -194,14 +229,13 @@ void execute_command(int window_id, COMMAND* cmd) {
 		execute_about(window_id);
 	} else if (string_compare(cmd->buffer, "ps") == 0) {
 		execute_ps(window_id);
+	} else if (string_compare_for_echo(cmd->buffer) == 0) {
+		// wm_print(window_id, "\nEcho test passed");
+		execute_echo(window_id, cmd);
 	} else if (string_compare(cmd->buffer, "") == 0) {
 		;
 	} else {
-		wm_print(window_id, "\nERROR: ");
-		for (int i = 0; i < cmd->len; i++) {
-			wm_print(window_id, "%c", cmd->buffer[i]);
-		}
-		wm_print(window_id, ": Command not found");
+		print_cmd_404(window_id, cmd);
 	}
 
 }
@@ -219,7 +253,7 @@ void shell_process(PROCESS self, PARAM param) {
 		
 		read_command(window_id, cmd);
 		if (cmd->limit_flag != TRUE) {
-			clean_command(cmd);
+			clear_whitespaces(cmd);
 			execute_command(window_id, cmd);
 			// print_output(entered_command);
 		}
