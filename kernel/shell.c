@@ -38,7 +38,7 @@ int string_compare_for_echo(const char* str) {
 void clean_buffer(COMMAND* cmd) {
 
 	while (cmd->len != 0) {
-		cmd->buffer[cmd->len] = ' ';
+		cmd->buffer[cmd->len] = '\0';
 		cmd->len--;
 	}
 }
@@ -62,6 +62,11 @@ void clear_whitespaces(COMMAND* cmd) {
 			end = i;
 			break;
 		}
+	}
+
+	// clean temp buffer
+	for (i = 0; i < MAX_LEN; i++) {
+		temp_buffer[i] = '\0';
 	}
 
 	for (i = start, j = 0; i <= end; i++) {
