@@ -36,6 +36,19 @@ int string_compare_for_echo(const char* str) {
 }
 
 
+int convert_str_to_int(char* num_array) {
+	int result = 0;
+	int i = 0;
+
+	while(num_array[i] != '\0') {
+		result = (result * 10) + ((int)(num_array[i] - 48));
+		i++;
+	}
+
+	return result;
+}
+
+
 void clean_buffer(COMMAND* cmd) {
 
 	while (cmd->len != 0) {
@@ -103,7 +116,7 @@ void execute_help(int window_id) {
 	wm_print(window_id, "shell:      Launches a new shell\n");
 	wm_print(window_id, "pong:       Launches a game of PONG\n");
 	wm_print(window_id, "ps:         Prints out the process table\n");
-	wm_print(window_id, "echo <msg>: Echoes to console the string that follows the cmd\n");
+	wm_print(window_id, "echo <msg>: Echoes entered string to the console\n");
 	wm_print(window_id, "history:    Prints all the commands typed into the shell\n");
 	wm_print(window_id, "!<number>:  Repeats the command with the given number\n");
 }
@@ -179,7 +192,39 @@ void execute_history(int window_id, COMMAND* head) {
 
 
 void execute_exclamation_cmd(int window_id, COMMAND* head, COMMAND* cmd) {
+	int cmd_index;
+	char entered_index[cmd->len - 1];
+
+	if (k_strlen(cmd->buffer) == 1) { // if there is no entered char after !
+		print_cmd_404(window_id, cmd); // commmand not found
+		return;
+	}
+
+	for (int i = 1; i < cmd->len; i++) {
+
+		if (cmd->buffer[i] < 48 || cmd->buffer[i] > 57) { // if char is not a number
+			print_cmd_404(window_id, cmd); // commmand not found
+			return;
+		}
+		entered_index[i - 1] = cmd->buffer[i];
+	}
+
+	cmd_index = convert_str_to_int(entered_index);
 	
+	if (cmd_index >= cmd->index) {
+		wm_print(window_id, "\nERROR: Entered index exceeds total commands in history");
+	} else {
+		COMMAND* node = head;
+
+		while(node != NULL) {
+			if (node->index == cmd_index) {
+				wm_print(window_id, "\n%s", node->buffer);
+				execute_command(window_id, head, node);
+				break;
+			}
+			node = node->next;
+		}
+	}
 }
 
 
@@ -283,9 +328,8 @@ void shell_process(PROCESS self, PARAM param) {
 		COMMAND* cmd = (COMMAND *) malloc(sizeof(COMMAND));
 
 		read_command(window_id, cmd);
-		cmd->index = cmd_index;
+		cmd->index = cmd_index++;
 		cmd->next = NULL;
-		cmd_index++;
 
 		if (head == NULL) {
 			head = cmd;
@@ -299,7 +343,6 @@ void shell_process(PROCESS self, PARAM param) {
 			clear_whitespaces(tail);
 			execute_command(window_id, head, tail);
 		}
-		// clean_buffer(head);
 
 		wm_print(window_id, "\n");
 	}
