@@ -10,11 +10,12 @@
 typedef struct COMMAND_STRUCT {
 	char buffer[MAX_LEN];
 	int len;
+	int index;
 	BOOL limit_flag;
+	struct COMMAND_STRUCT *next;
 } COMMAND;
 
 
-// helpers
 int string_compare(const char* str1, const char* str2) {
 	
 	while (*str1 != '\0' && *str2 != '\0') {
@@ -30,6 +31,11 @@ int string_compare(const char* str1, const char* str2) {
 }
 
 
+int string_compare_for_echo(const char* str) {
+	return k_memcmp(str, "echo", k_strlen("echo"));
+}
+
+
 void clean_buffer(COMMAND* cmd) {
 
 	while (cmd->len != 0) {
@@ -40,7 +46,7 @@ void clean_buffer(COMMAND* cmd) {
 
 
 // remove leading and trailing whitespaces
-void clean_command(COMMAND* cmd) {
+void clear_whitespaces(COMMAND* cmd) {
 
 	int i, j, start, end;
 	char temp_buffer[MAX_LEN];
@@ -57,6 +63,11 @@ void clean_command(COMMAND* cmd) {
 			end = i;
 			break;
 		}
+	}
+
+	// clean temp buffer
+	for (i = 0; i < MAX_LEN; i++) {
+		temp_buffer[i] = '\0';
 	}
 
 	for (i = start, j = 0; i <= end; i++) {
@@ -92,8 +103,8 @@ void execute_help(int window_id) {
 	wm_print(window_id, "shell:      Launches a new shell\n");
 	wm_print(window_id, "pong:       Launches a game of PONG\n");
 	wm_print(window_id, "ps:         Prints out the process table\n");
-	wm_print(window_id, "echo <msg>: Echoes to the console the string that follows the command\n");
-	wm_print(window_id, "history:    Prints all commands that have been typed into the shell\n");
+	wm_print(window_id, "echo <msg>: Echoes to console the string that follows the cmd\n");
+	wm_print(window_id, "history:    Prints all the commands typed into the shell\n");
 	wm_print(window_id, "!<number>:  Repeats the command with the given number\n");
 }
 
@@ -132,6 +143,15 @@ void print_proc_details(int window_id, PROCESS p) {
 }
 
 
+void print_cmd_404(int window_id, COMMAND* cmd) {
+	wm_print(window_id, "\nERROR: ");
+	for (int i = 0; i < cmd->len; i++) {
+		wm_print(window_id, "%c", cmd->buffer[i]);
+	}
+	wm_print(window_id, ": Command not found");
+}
+
+
 // slightly modified version of print_all_processes() from process.c
 void execute_ps(int window_id) {
 	int i;
@@ -143,6 +163,43 @@ void execute_ps(int window_id) {
 		if (!p->used)
 			continue;
 		print_proc_details(window_id, p);
+	}
+}
+
+
+void execute_history(int window_id, COMMAND* head) {
+	COMMAND* node = head;
+
+	while(node != NULL) {
+		wm_print(window_id, "\n%d ", node->index);
+		wm_print(window_id, "%s", node->buffer);
+		node = node->next;
+	}
+}
+
+
+void execute_exclamation_cmd(int window_id, COMMAND* head, COMMAND* cmd) {
+	
+}
+
+
+void execute_echo(int window_id, COMMAND* cmd) {
+	int ignore_quotes = 0;
+
+	if (cmd->buffer[4] == ' ' || cmd->buffer[4] == '\0') {
+		wm_print(window_id, "\n");
+
+		if (cmd->buffer[5] == '"' && cmd->buffer[cmd->len - 1] == '"' || cmd->buffer[5] == '\'' && cmd->buffer[cmd->len - 1] == '\'') {
+			// wm_print(window_id, "contains quotes test passed\n");
+			ignore_quotes = 1;
+		}
+
+		for (int i = (5 + ignore_quotes); i < (cmd->len - ignore_quotes); i++) {
+			wm_print(window_id, "%c", cmd->buffer[i]);
+		}
+
+	} else {
+		print_cmd_404(window_id, cmd);
 	}
 }
 
@@ -177,10 +234,11 @@ void read_command(int window_id, COMMAND* cmd) {
 		key = keyb_get_keystroke(window_id, TRUE);
 	}
 	cmd->buffer[cmd->len] = '\0';
+
 }
 
 
-void execute_command(int window_id, COMMAND* cmd) {
+void execute_command(int window_id, COMMAND* head, COMMAND* cmd) {
 
 	if (string_compare(cmd->buffer, "shell") == 0) {
 		start_shell();
@@ -194,36 +252,54 @@ void execute_command(int window_id, COMMAND* cmd) {
 		execute_about(window_id);
 	} else if (string_compare(cmd->buffer, "ps") == 0) {
 		execute_ps(window_id);
+	} else if (string_compare(cmd->buffer, "history") == 0) {
+		execute_history(window_id, head);
+	} else if (string_compare_for_echo(cmd->buffer) == 0) {
+		execute_echo(window_id, cmd);
+	} else if (cmd->buffer[0] == '!') {
+		// wm_print(window_id, "\n! test passed");
+		execute_exclamation_cmd(window_id, head, cmd);
 	} else if (string_compare(cmd->buffer, "") == 0) {
 		;
 	} else {
-		wm_print(window_id, "\nERROR: ");
-		for (int i = 0; i < cmd->len; i++) {
-			wm_print(window_id, "%c", cmd->buffer[i]);
-		}
-		wm_print(window_id, ": Command not found");
+		print_cmd_404(window_id, cmd);
 	}
 
 }
 
 
 void shell_process(PROCESS self, PARAM param) {
-	COMMAND* cmd;
-	// char entered_com[];
+	COMMAND* head = NULL;
+	COMMAND* tail = NULL;
+	int cmd_index = 1;
 
-	int window_id = wm_create(10, 3, 50, 17);
-	wm_print(window_id, "******* Welcome to Rohan's TOS Shell *******\n");
+	int window_id = wm_create(10, 3, 60, 17);
+	wm_print(window_id, "************** Welcome to Rohan's TOS Shell **************\n");
+	wm_print(window_id, "**************** Type 'help' to see menu ****************\n");
 
 	while (1) {
 		wm_print(window_id, ">>");
-		
+
+		COMMAND* cmd = (COMMAND *) malloc(sizeof(COMMAND));
+
 		read_command(window_id, cmd);
-		if (cmd->limit_flag != TRUE) {
-			clean_command(cmd);
-			execute_command(window_id, cmd);
-			// print_output(entered_command);
+		cmd->index = cmd_index;
+		cmd->next = NULL;
+		cmd_index++;
+
+		if (head == NULL) {
+			head = cmd;
+			tail = cmd;
+		} else {
+			tail->next = cmd;
+			tail = tail->next;
 		}
-		clean_buffer(cmd);
+
+		if (tail->limit_flag != TRUE) {
+			clear_whitespaces(tail);
+			execute_command(window_id, head, tail);
+		}
+		// clean_buffer(head);
 
 		wm_print(window_id, "\n");
 	}
