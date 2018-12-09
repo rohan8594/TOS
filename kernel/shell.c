@@ -249,8 +249,33 @@ void execute_echo(int window_id, COMMAND* cmd) {
 }
 
 
-void read_command(int window_id, COMMAND* cmd) {
+void handle_chained_cmds(int window_id, COMMAND* head, COMMAND* cmd) {
+	COMMAND* temp_cmd = (COMMAND *) malloc(sizeof(COMMAND));
+	temp_cmd->len = 0;
+	int i = 0;
 
+	while(i != (cmd->len + 1)) {
+		if (cmd->buffer[i] == ';' || cmd->buffer[i] == '\0') {
+			temp_cmd->buffer[temp_cmd->len] = '\0';
+
+			execute_command(window_id, head, temp_cmd);
+
+			free(temp_cmd);
+			COMMAND* temp_cmd = (COMMAND *) malloc(sizeof(COMMAND));
+			temp_cmd->len = 0;
+		} else {
+			temp_cmd->buffer[temp_cmd->len] = cmd->buffer[i];
+			temp_cmd->len++;
+		}
+		i++;
+	}
+	
+}
+
+
+BOOL read_command(int window_id, COMMAND* cmd) {
+
+	BOOL multiple_cmds = FALSE;
 	cmd->len = 0;
 	cmd->limit_flag = FALSE;
 	char key = keyb_get_keystroke(window_id, TRUE);
@@ -269,8 +294,9 @@ void read_command(int window_id, COMMAND* cmd) {
 			if (cmd->len >= MAX_LEN) {
 				wm_print(window_id, "\nERROR: Command exceeded maximum length");
 				cmd->limit_flag = TRUE;
-				return;
+				return multiple_cmds;
 			} else {
+				if (key == ';') multiple_cmds = TRUE;
 				cmd->buffer[cmd->len] = key;
 				cmd->len++;
 				wm_print(window_id, "%c", key);
@@ -280,6 +306,7 @@ void read_command(int window_id, COMMAND* cmd) {
 	}
 	cmd->buffer[cmd->len] = '\0';
 
+	return multiple_cmds;
 }
 
 
@@ -327,7 +354,7 @@ void shell_process(PROCESS self, PARAM param) {
 
 		COMMAND* cmd = (COMMAND *) malloc(sizeof(COMMAND));
 
-		read_command(window_id, cmd);
+		BOOL multiple_cmds = read_command(window_id, cmd);
 		cmd->index = cmd_index++;
 		cmd->next = NULL;
 
@@ -341,7 +368,11 @@ void shell_process(PROCESS self, PARAM param) {
 
 		if (tail->limit_flag != TRUE) {
 			clear_whitespaces(tail);
-			execute_command(window_id, head, tail);
+			if (multiple_cmds == TRUE) {
+				handle_chained_cmds(window_id, head, tail);
+			} else {
+				execute_command(window_id, head, tail);
+			}
 		}
 
 		wm_print(window_id, "\n");
