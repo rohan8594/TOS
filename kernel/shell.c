@@ -36,6 +36,19 @@ int string_compare_for_echo(const char* str) {
 }
 
 
+int convert_str_to_int(char* num_array) {
+	int result = 0;
+	int i = 0;
+
+	while(num_array[i] != '\0') {
+		result = (result * 10) + ((int)(num_array[i] - 48));
+		i++;
+	}
+
+	return result;
+}
+
+
 void clean_buffer(COMMAND* cmd) {
 
 	while (cmd->len != 0) {
@@ -103,7 +116,7 @@ void execute_help(int window_id) {
 	wm_print(window_id, "shell:      Launches a new shell\n");
 	wm_print(window_id, "pong:       Launches a game of PONG\n");
 	wm_print(window_id, "ps:         Prints out the process table\n");
-	wm_print(window_id, "echo <msg>: Echoes to console the string that follows the cmd\n");
+	wm_print(window_id, "echo <msg>: Echoes entered string to the console\n");
 	wm_print(window_id, "history:    Prints all the commands typed into the shell\n");
 	wm_print(window_id, "!<number>:  Repeats the command with the given number\n");
 }
@@ -179,7 +192,39 @@ void execute_history(int window_id, COMMAND* head) {
 
 
 void execute_exclamation_cmd(int window_id, COMMAND* head, COMMAND* cmd) {
+	int cmd_index;
+	char entered_index[cmd->len - 1];
+
+	if (k_strlen(cmd->buffer) == 1) { // if there is no entered char after !
+		print_cmd_404(window_id, cmd); // commmand not found
+		return;
+	}
+
+	for (int i = 1; i < cmd->len; i++) {
+
+		if (cmd->buffer[i] < 48 || cmd->buffer[i] > 57) { // if char is not a number
+			print_cmd_404(window_id, cmd); // commmand not found
+			return;
+		}
+		entered_index[i - 1] = cmd->buffer[i];
+	}
+
+	cmd_index = convert_str_to_int(entered_index);
 	
+	if (cmd_index >= cmd->index) {
+		wm_print(window_id, "\nERROR: Entered index exceeds total commands in history");
+	} else {
+		COMMAND* node = head;
+
+		while(node != NULL) {
+			if (node->index == cmd_index) {
+				wm_print(window_id, "\n%s", node->buffer);
+				execute_command(window_id, head, node);
+				break;
+			}
+			node = node->next;
+		}
+	}
 }
 
 
@@ -204,8 +249,33 @@ void execute_echo(int window_id, COMMAND* cmd) {
 }
 
 
-void read_command(int window_id, COMMAND* cmd) {
+void handle_chained_cmds(int window_id, COMMAND* head, COMMAND* cmd) {
+	COMMAND* temp_cmd = (COMMAND *) malloc(sizeof(COMMAND));
+	temp_cmd->len = 0;
+	int i = 0;
 
+	while(i != (cmd->len + 1)) {
+		if (cmd->buffer[i] == ';' || cmd->buffer[i] == '\0') {
+			temp_cmd->buffer[temp_cmd->len] = '\0';
+
+			execute_command(window_id, head, temp_cmd);
+
+			free(temp_cmd);
+			COMMAND* temp_cmd = (COMMAND *) malloc(sizeof(COMMAND));
+			temp_cmd->len = 0;
+		} else {
+			temp_cmd->buffer[temp_cmd->len] = cmd->buffer[i];
+			temp_cmd->len++;
+		}
+		i++;
+	}
+	
+}
+
+
+BOOL read_command(int window_id, COMMAND* cmd) {
+
+	BOOL multiple_cmds = FALSE;
 	cmd->len = 0;
 	cmd->limit_flag = FALSE;
 	char key = keyb_get_keystroke(window_id, TRUE);
@@ -224,8 +294,9 @@ void read_command(int window_id, COMMAND* cmd) {
 			if (cmd->len >= MAX_LEN) {
 				wm_print(window_id, "\nERROR: Command exceeded maximum length");
 				cmd->limit_flag = TRUE;
-				return;
+				return multiple_cmds;
 			} else {
+				if (key == ';') multiple_cmds = TRUE;
 				cmd->buffer[cmd->len] = key;
 				cmd->len++;
 				wm_print(window_id, "%c", key);
@@ -235,6 +306,7 @@ void read_command(int window_id, COMMAND* cmd) {
 	}
 	cmd->buffer[cmd->len] = '\0';
 
+	return multiple_cmds;
 }
 
 
@@ -282,10 +354,9 @@ void shell_process(PROCESS self, PARAM param) {
 
 		COMMAND* cmd = (COMMAND *) malloc(sizeof(COMMAND));
 
-		read_command(window_id, cmd);
-		cmd->index = cmd_index;
+		BOOL multiple_cmds = read_command(window_id, cmd);
+		cmd->index = cmd_index++;
 		cmd->next = NULL;
-		cmd_index++;
 
 		if (head == NULL) {
 			head = cmd;
@@ -297,9 +368,12 @@ void shell_process(PROCESS self, PARAM param) {
 
 		if (tail->limit_flag != TRUE) {
 			clear_whitespaces(tail);
-			execute_command(window_id, head, tail);
+			if (multiple_cmds == TRUE) {
+				handle_chained_cmds(window_id, head, tail);
+			} else {
+				execute_command(window_id, head, tail);
+			}
 		}
-		// clean_buffer(head);
 
 		wm_print(window_id, "\n");
 	}
