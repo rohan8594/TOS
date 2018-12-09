@@ -3,8 +3,8 @@
 
 #include <kernel.h>
 
-#define ENTER_COMMAND 0x0D
-#define BACKSPACE_COMMAND 0x08
+#define ENTER 0x0D
+#define BACKSPACE 0x08
 #define MAX_LEN 50
 
 typedef struct COMMAND_STRUCT {
@@ -96,6 +96,23 @@ void clear_whitespaces(COMMAND* cmd) {
 	cmd->buffer[cmd->len] = '\0';
 
 }
+
+
+COMMAND* clean_echo_string(COMMAND* cmd, int ignore_quotes) {
+
+	COMMAND* temp_cmd = (COMMAND *) malloc(sizeof(COMMAND));
+	temp_cmd->len = 0;
+
+	for (int i = (5 + ignore_quotes); i < (cmd->len - ignore_quotes); i++) {
+		// wm_print(window_id, "%c", cmd->buffer[i]);
+		temp_cmd->buffer[temp_cmd->len] = cmd->buffer[i];
+		temp_cmd->len++;
+	}
+	temp_cmd->buffer[temp_cmd->len] = '\0';
+
+	clear_whitespaces(temp_cmd);
+	return temp_cmd;
+} 
 
 
 void execute_about(int window_id) {
@@ -234,13 +251,15 @@ void execute_echo(int window_id, COMMAND* cmd) {
 	if (cmd->buffer[4] == ' ' || cmd->buffer[4] == '\0') {
 		wm_print(window_id, "\n");
 
-		if (cmd->buffer[5] == '"' && cmd->buffer[cmd->len - 1] == '"' || cmd->buffer[5] == '\'' && cmd->buffer[cmd->len - 1] == '\'') {
+		if ((cmd->buffer[5] == '"' && cmd->buffer[cmd->len - 1] == '"') || (cmd->buffer[5] == '\'' && cmd->buffer[cmd->len - 1] == '\'')) {
 			// wm_print(window_id, "contains quotes test passed\n");
 			ignore_quotes = 1;
 		}
 
-		for (int i = (5 + ignore_quotes); i < (cmd->len - ignore_quotes); i++) {
-			wm_print(window_id, "%c", cmd->buffer[i]);
+		COMMAND* temp_cmd = clean_echo_string(cmd, ignore_quotes); // trimming leading and trailing whitespaces from echo string
+
+		for (int i = 0; i < temp_cmd->len; i++) {
+			wm_print(window_id, "%c", temp_cmd->buffer[i]);
 		}
 
 	} else {
@@ -280,9 +299,9 @@ BOOL read_command(int window_id, COMMAND* cmd) {
 	cmd->limit_flag = FALSE;
 	char key = keyb_get_keystroke(window_id, TRUE);
 
-	while (key != ENTER_COMMAND) {
+	while (key != ENTER) {
 		switch (key) {
-			case BACKSPACE_COMMAND:
+			case BACKSPACE:
 			if (cmd->len != 0) {
 				cmd->buffer[cmd->len] = '\0';
 				cmd->len--;
