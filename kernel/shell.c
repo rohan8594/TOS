@@ -16,7 +16,7 @@ typedef struct COMMAND_STRUCT {
 } COMMAND;
 
 
-/******************* helpers *******************/
+/******************* Helpers *******************/
 
 int string_compare(const char* str1, const char* str2) {
 	
@@ -384,8 +384,7 @@ void shell_process(PROCESS self, PARAM param) {
 		cmd->index = cmd_index++;
 		cmd->next = NULL;
 
-		if (k_strlen(cmd->buffer) < 1) { /* handling an edge case where user 
-											clicks enter with typing anything */
+		if (k_strlen(cmd->buffer) < 1) { // handling an edge case where user clicks enter with typing anything
 			wm_print(window_id, "\n");
 			cmd_index--;
 			continue;
