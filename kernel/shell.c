@@ -10,11 +10,13 @@
 typedef struct COMMAND_STRUCT {
 	char buffer[MAX_LEN];
 	int len;
-	int index;
-	BOOL limit_flag;
-	struct COMMAND_STRUCT *next;
+	int index;                   /* Index of command within linked list of commands*/
+	BOOL limit_flag;             /* Indicates if command is within max input limit */
+	struct COMMAND_STRUCT *next; /* Next command. Helps in maintaining history */
 } COMMAND;
 
+
+/******************* helpers *******************/
 
 int string_compare(const char* str1, const char* str2) {
 	
@@ -49,6 +51,7 @@ int convert_str_to_int(char* num_array) {
 }
 
 
+// clear command buffer
 void clean_buffer(COMMAND* cmd) {
 
 	while (cmd->len != 0) {
@@ -78,7 +81,7 @@ void clear_whitespaces(COMMAND* cmd) {
 		}
 	}
 
-	// clean temp buffer
+	// clear temp buffer
 	for (i = 0; i < MAX_LEN; i++) {
 		temp_buffer[i] = '\0';
 	}
@@ -98,13 +101,13 @@ void clear_whitespaces(COMMAND* cmd) {
 }
 
 
+// remove leading and trailing whitespaces from echo string
 COMMAND* clean_echo_string(COMMAND* cmd, int ignore_quotes) {
 
 	COMMAND* temp_cmd = (COMMAND *) malloc(sizeof(COMMAND));
 	temp_cmd->len = 0;
 
 	for (int i = (5 + ignore_quotes); i < (cmd->len - ignore_quotes); i++) {
-		// wm_print(window_id, "%c", cmd->buffer[i]);
 		temp_cmd->buffer[temp_cmd->len] = cmd->buffer[i];
 		temp_cmd->len++;
 	}
@@ -114,6 +117,8 @@ COMMAND* clean_echo_string(COMMAND* cmd, int ignore_quotes) {
 	return temp_cmd;
 } 
 
+
+/******************* Commands related functions *******************/
 
 void execute_about(int window_id) {
 	wm_print(window_id, "\n*********** TOS ************\n");
@@ -268,6 +273,7 @@ void execute_echo(int window_id, COMMAND* cmd) {
 }
 
 
+// handle multiple commands seperated by semicolons
 void handle_chained_cmds(int window_id, COMMAND* head, COMMAND* cmd) {
 	COMMAND* temp_cmd = (COMMAND *) malloc(sizeof(COMMAND));
 	temp_cmd->len = 0;
@@ -277,6 +283,7 @@ void handle_chained_cmds(int window_id, COMMAND* head, COMMAND* cmd) {
 		if (cmd->buffer[i] == ';' || cmd->buffer[i] == '\0') {
 			temp_cmd->buffer[temp_cmd->len] = '\0';
 
+			clear_whitespaces(temp_cmd);
 			execute_command(window_id, head, temp_cmd);
 
 			free(temp_cmd);
@@ -300,6 +307,7 @@ BOOL read_command(int window_id, COMMAND* cmd) {
 	char key = keyb_get_keystroke(window_id, TRUE);
 
 	while (key != ENTER) {
+
 		switch (key) {
 			case BACKSPACE:
 			if (cmd->len != 0) {
@@ -348,7 +356,6 @@ void execute_command(int window_id, COMMAND* head, COMMAND* cmd) {
 	} else if (string_compare_for_echo(cmd->buffer) == 0) {
 		execute_echo(window_id, cmd);
 	} else if (cmd->buffer[0] == '!') {
-		// wm_print(window_id, "\n! test passed");
 		execute_exclamation_cmd(window_id, head, cmd);
 	} else if (string_compare(cmd->buffer, "") == 0) {
 		;
@@ -377,6 +384,14 @@ void shell_process(PROCESS self, PARAM param) {
 		cmd->index = cmd_index++;
 		cmd->next = NULL;
 
+		if (k_strlen(cmd->buffer) < 1) { /* handling an edge case where user 
+											clicks enter with typing anything */
+			wm_print(window_id, "\n");
+			cmd_index--;
+			continue;
+		}
+
+		// push new command into tail of linked list
 		if (head == NULL) {
 			head = cmd;
 			tail = cmd;
