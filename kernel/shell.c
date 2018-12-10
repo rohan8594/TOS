@@ -256,7 +256,7 @@ void execute_echo(int window_id, COMMAND* cmd) {
 	if ((cmd->buffer[4] == ' ' || cmd->buffer[4] == '\0') && k_strlen(cmd->buffer) <= 5) {
 		wm_print(window_id, "\n");
 		return;
-		
+
 	} else if ((cmd->buffer[4] == ' ' || cmd->buffer[4] == '\0') && k_strlen(cmd->buffer) > 5) {
 		wm_print(window_id, "\n");
 
@@ -281,6 +281,7 @@ void execute_echo(int window_id, COMMAND* cmd) {
 void handle_chained_cmds(int window_id, COMMAND* head, COMMAND* cmd) {
 	COMMAND* temp_cmd = (COMMAND *) malloc(sizeof(COMMAND));
 	temp_cmd->len = 0;
+	temp_cmd->index = cmd->index;
 	int i = 0;
 
 	while(i != (cmd->len + 1)) {
@@ -293,6 +294,7 @@ void handle_chained_cmds(int window_id, COMMAND* head, COMMAND* cmd) {
 			free(temp_cmd);
 			COMMAND* temp_cmd = (COMMAND *) malloc(sizeof(COMMAND));
 			temp_cmd->len = 0;
+			temp_cmd->index = cmd->index;
 		} else {
 			temp_cmd->buffer[temp_cmd->len] = cmd->buffer[i];
 			temp_cmd->len++;
