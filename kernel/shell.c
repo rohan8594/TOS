@@ -253,7 +253,11 @@ void execute_exclamation_cmd(int window_id, COMMAND* head, COMMAND* cmd) {
 void execute_echo(int window_id, COMMAND* cmd) {
 	int ignore_quotes = 0;
 
-	if (cmd->buffer[4] == ' ' || cmd->buffer[4] == '\0') {
+	if ((cmd->buffer[4] == ' ' || cmd->buffer[4] == '\0') && k_strlen(cmd->buffer) <= 5) {
+		wm_print(window_id, "\n");
+		return;
+		
+	} else if ((cmd->buffer[4] == ' ' || cmd->buffer[4] == '\0') && k_strlen(cmd->buffer) > 5) {
 		wm_print(window_id, "\n");
 
 		if ((cmd->buffer[5] == '"' && cmd->buffer[cmd->len - 1] == '"') || (cmd->buffer[5] == '\'' && cmd->buffer[cmd->len - 1] == '\'')) {
