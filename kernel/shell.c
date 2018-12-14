@@ -359,6 +359,8 @@ void execute_command(int window_id, COMMAND* head, COMMAND* cmd) {
 		execute_ps(window_id);
 	} else if (string_compare(cmd->buffer, "history") == 0) {
 		execute_history(window_id, head);
+	} else if (string_compare(cmd->buffer, "train") == 0) {
+		init_train();
 	} else if (string_compare_for_echo(cmd->buffer) == 0) {
 		execute_echo(window_id, cmd);
 	} else if (cmd->buffer[0] == '!') {
