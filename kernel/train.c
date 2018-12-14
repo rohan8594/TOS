@@ -116,7 +116,7 @@ void train_process(PROCESS self, PARAM param) {
 	wm_print(window_id, "\nDetected Zamboni");
 	
 
-	while(1); // Bad but simple fix to avoid fatal exception 6
+	become_zombie(); // avoiding fatal exception 6
 }
 
 
