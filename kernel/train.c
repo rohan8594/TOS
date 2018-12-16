@@ -124,8 +124,8 @@ int identify_config(int window_id) {
 
 	wm_print(window_id, "\nIdentifying config...");
 
-	// probe 10 track 10 times to detect Zamboni
-	for (int i = 0; i < 10; i++) {
+	// probe 10 track 12 times to detect Zamboni
+	for (int i = 0; i < 12; i++) {
 		zamboni = probe_contact("10");
 		wm_print(window_id, LOADING);
 
@@ -154,22 +154,95 @@ int identify_config(int window_id) {
 
 
 void config_1(int window_id) {
+	toggle_switch("M5R", window_id);
+	change_train_speed("5", window_id);
+	poll_track("14", window_id);
+	toggle_switch("M8R", window_id);
+	toggle_switch("M7R", window_id);
+	toggle_switch("M1R", window_id);
 
+	poll_track("12", window_id);
+	toggle_switch("M8G", window_id);
+	poll_track("7", window_id);
+
+	change_train_speed("0", window_id);
+	change_train_direction(window_id);
+	toggle_switch("M5R", window_id);
+	change_train_speed("5", window_id);
+
+	poll_track("8", window_id);
+	change_train_speed("0", window_id);
 }
 
 
 void config_2(int window_id) {
-	
+	toggle_switch("M7R", window_id);
+	toggle_switch("M8R", window_id);
+	change_train_direction(window_id);
+	change_train_speed("5", window_id);
+
+	toggle_switch("M1R", window_id);
+	toggle_switch("M2G", window_id);
+	poll_track("1", window_id);
+	toggle_switch("M3G", window_id);
+	toggle_switch("M4R", window_id);
+
+	poll_track("7", window_id);
+	toggle_switch("M5R", window_id);
+	toggle_switch("M6G", window_id);
+	toggle_switch("M7G", window_id);
+	poll_track("9", window_id);
+	toggle_switch("M5G", window_id);
+	change_train_speed("4", window_id);
+
+	poll_track("12", window_id);
+	change_train_speed("0", window_id);
 }
 
 
 void config_3(int window_id) {
-	
+	toggle_switch("M3G", window_id);
+	toggle_switch("M4R", window_id);
+	change_train_speed("5", window_id);
+
+	poll_track("6", window_id);
+	toggle_switch("M5R", window_id);
+	toggle_switch("M6G", window_id);
+	toggle_switch("M7G", window_id);
+
+	poll_track("12", window_id);
+	change_train_speed("0", window_id);
+	change_train_direction(window_id);
+	toggle_switch("M7R", window_id);
+	change_train_speed("5", window_id);
+
+	poll_track("14", window_id);
+	toggle_switch("M1R", window_id);
+	toggle_switch("M2G", window_id);
+	poll_track("2", window_id);
+	change_train_speed("0", window_id);
 }
 
 
 void config_4(int window_id) {
-	
+	toggle_switch("M3R", window_id);
+	toggle_switch("M4R", window_id);
+	change_train_speed("5", window_id);
+
+	poll_track("6", window_id);
+	toggle_switch("M4G", window_id);
+	toggle_switch("M5R", window_id);
+	toggle_switch("M6G", window_id);
+	toggle_switch("M7G", window_id);
+	poll_track("9", window_id);
+	toggle_switch("M2R", window_id);
+	toggle_switch("M1R", window_id);
+
+	poll_track("7", window_id);
+	toggle_switch("M4R", window_id);
+	toggle_switch("M3R", window_id);
+	poll_track("5", window_id);
+	change_train_speed("0", window_id);
 }
 
 
@@ -192,6 +265,7 @@ void config_5(int window_id) {
 	change_train_speed("0", window_id);
 	change_train_direction(window_id);
 	toggle_switch("M5R", window_id);
+	toggle_switch("M6R", window_id);
 	change_train_speed("5", window_id);
 
 	poll_track("8", window_id);
@@ -232,12 +306,65 @@ void config_6(int window_id) {
 
 
 void config_7(int window_id) {
+	poll_track("6", window_id);
+	toggle_switch("M3G", window_id);
+	toggle_switch("M4R", window_id);
+	change_train_speed("5", window_id);
+	poll_track("6", window_id);
+	toggle_switch("M4G", window_id);
+	poll_track("10", window_id);
+
+	toggle_switch("M5R", window_id);
+	toggle_switch("M6G", window_id);
+	toggle_switch("M7G", window_id);
+
+	poll_track("9", window_id);
+	toggle_switch("M5G", window_id);
 	
+	poll_track("12", window_id);
+	change_train_speed("0", window_id);
+	change_train_direction(window_id);
+	toggle_switch("M7R", window_id);
+	change_train_speed("5", window_id);
+
+	poll_track("14", window_id);
+	toggle_switch("M1R", window_id);
+	toggle_switch("M2G", window_id);
+	poll_track("2", window_id);
+	change_train_speed("0", window_id);
+	toggle_switch("M1G", window_id);
 }
 
 
 void config_8(int window_id) {
-	
+	poll_track("4", window_id);
+	toggle_switch("M3R", window_id);
+	toggle_switch("M4R", window_id);
+	change_train_speed("5", window_id);
+
+	poll_track("6", window_id);
+	toggle_switch("M4G", window_id);
+	toggle_switch("M5R", window_id);
+	toggle_switch("M6G", window_id);
+	toggle_switch("M7G", window_id);
+	poll_track("9", window_id);
+	change_train_speed("0", window_id);
+
+	poll_track("13", window_id);
+	change_train_speed("5", window_id);
+	toggle_switch("M2R", window_id);
+	toggle_switch("M1R", window_id);
+
+	poll_track("14", window_id);
+	toggle_switch("M1G", window_id);
+	poll_track("10", window_id);
+	poll_track("7", window_id);
+	poll_track("6", window_id);
+	toggle_switch("M4R", window_id);
+	toggle_switch("M3R", window_id);
+	poll_track("5", window_id);
+	change_train_speed("0", window_id);
+	toggle_switch("M4G", window_id);
 }
 
 
@@ -254,19 +381,19 @@ void train_process(PROCESS self, PARAM param) {
 
 	switch(config) {
 		case CONFIG_1:
-		// execute 1
+		config_1(window_id);
 		break;
 
 		case CONFIG_2:
-		// execute 2
+		config_2(window_id);
 		break;
 
 		case CONFIG_3:
-		// execute 3
+		config_3(window_id);
 		break;
 
 		case CONFIG_4:
-		// execute 4
+		config_4(window_id);
 		break;
 
 		case CONFIG_5:
@@ -278,11 +405,11 @@ void train_process(PROCESS self, PARAM param) {
 		break;
 
 		case CONFIG_7:
-		// execute 7
+		config_7(window_id);
 		break;
 
 		case CONFIG_8:
-		// execute 8
+		config_8(window_id);
 		break;
 
 		default:
