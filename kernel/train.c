@@ -169,6 +169,7 @@ void config_1(int window_id) {
 	change_train_speed("0", window_id);
 	change_train_direction(window_id);
 	toggle_switch("M5R", window_id);
+	toggle_switch("M6R", window_id);
 	change_train_speed("5", window_id);
 
 	poll_track("8", window_id);
@@ -228,7 +229,7 @@ void config_3(int window_id) {
 void config_4(int window_id) {
 	toggle_switch("M3R", window_id);
 	toggle_switch("M4R", window_id);
-	change_train_speed("5", window_id);
+	change_train_speed("4", window_id);
 
 	poll_track("6", window_id);
 	toggle_switch("M4G", window_id);
