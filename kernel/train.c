@@ -12,11 +12,12 @@
 #define CONFIG_6 6
 #define CONFIG_7 7
 #define CONFIG_8 8
-#define DEFAULT_TICKS 5
+#define DEFAULT_TICKS 10
+#define DEFAULT_SHORT_TICKS 5
 #define LOADING "."
 
 
-void send_cmd_to_train(char* cmd, char* response, int response_len) {
+void send_cmd_to_train(char* cmd, char* response, int response_len, int ticks) {
 	COM_Message msg;
 
 	msg.output_buffer = cmd;
@@ -24,12 +25,12 @@ void send_cmd_to_train(char* cmd, char* response, int response_len) {
 	msg.len_input_buffer = response_len;
 
 	send(com_port, &msg);
-	sleep(DEFAULT_TICKS);
+	sleep(ticks);
 }
 
 
 void change_train_direction(int window_id) {
-	send_cmd_to_train("L20D\015", NULL, 0);
+	send_cmd_to_train("L20D\015", NULL, 0, DEFAULT_TICKS);
 	wm_print(window_id, "\nReversed direction of train (L20D)");
 }
 
@@ -44,13 +45,13 @@ void change_train_speed(char* speed, int window_id) {
 
 	cmd[i++] = CR;
 	cmd[i] = '\0';
-	send_cmd_to_train(&cmd, NULL, 0);
+	send_cmd_to_train(&cmd, NULL, 0, DEFAULT_TICKS);
 	wm_print(window_id, "\nChanged train velocity to %s (L20S%s)", speed, speed);
 }
 
 
 void clear_s88_buffer() {
-	send_cmd_to_train("R\015", NULL, 0);
+	send_cmd_to_train("R\015", NULL, 0, DEFAULT_SHORT_TICKS);
 }
 
 
@@ -67,7 +68,7 @@ char probe_contact(char* contact_id) {
 	cmd[i] = '\0';
 
 	clear_s88_buffer();
-	send_cmd_to_train(&cmd, &response_buffer, 3);
+	send_cmd_to_train(&cmd, &response_buffer, 3, DEFAULT_SHORT_TICKS);
 
 	return response_buffer[1];
 }
@@ -95,7 +96,7 @@ void toggle_switch(char* switch_config, int window_id) {
 	cmd[i++] = CR;
 	cmd[i] = '\0';
 
-	send_cmd_to_train(&cmd, NULL, 0);
+	send_cmd_to_train(&cmd, NULL, 0, DEFAULT_TICKS);
 	wm_print(window_id, "\nChanged switch %c to %c (%s)", cmd[1], cmd[2], switch_config);
 }
 
@@ -359,7 +360,7 @@ void config_8(int window_id) {
 	toggle_switch("M1G", window_id);
 	poll_track("10", window_id);
 	poll_track("7", window_id);
-	poll_track("6", window_id);
+	// poll_track("6", window_id);
 	toggle_switch("M4R", window_id);
 	toggle_switch("M3R", window_id);
 	poll_track("5", window_id);
